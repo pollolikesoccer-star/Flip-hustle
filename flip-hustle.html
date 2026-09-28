@@ -64,7 +64,16 @@ const $=id=>document.getElementById(id);
 function fmt(n){return "$"+n.toLocaleString()}
 function resale(p){return Math.max(p.buy+30,Math.round(p.buy*1.2))}
 function save(){try{localStorage.setItem("flipHustle",JSON.stringify(state))}catch(e){}}
-try{let s=JSON.parse(localStorage.getItem("flipHustle"));if(s)state=s}catch(e){}
+try{let s=JSON.parse(localStorage.getItem("flipHustle"));if(s)state={...state,...s}}catch(e){}
+// Normalize saved settings from older versions so the marketplace never opens blank.
+if(!["All","Fashion","Electronics","Transportation","Cheap"].includes(state.cat)) state.cat="All";
+const validBrands=new Set(products.map(p=>p.brand));
+if(typeof state.brand!=="string" || (state.brand!=="All" && !validBrands.has(state.brand))) state.brand="All";
+if(typeof state.q!=="string") state.q="";
+if(!Array.isArray(state.inv)) state.inv=[];
+if(!Number.isFinite(state.cash)) state.cash=150;
+if(!Number.isFinite(state.level)||state.level<1) state.level=1;
+if(!Number.isFinite(state.xp)||state.xp<0) state.xp=0;
 function sound(kind){try{const A=window.AudioContext||window.webkitAudioContext;if(!window.ac)window.ac=new A();window.ac.resume();let t=ac.currentTime,o=ac.createOscillator(),g=ac.createGain();o.connect(g);g.connect(ac.destination);if(kind==="cash"){o.type="square";o.frequency.setValueAtTime(900,t);o.frequency.exponentialRampToValueAtTime(1400,t+.08);o.frequency.exponentialRampToValueAtTime(1050,t+.18)}else{o.frequency.value=880}g.gain.setValueAtTime(.12,t);g.gain.exponentialRampToValueAtTime(.001,t+.3);o.start();o.stop(t+.3)}catch(e){}}
 function renderStats(){ $("cash").textContent=fmt(state.cash);$("level").textContent=state.level;$("xptext").textContent=state.xp+" XP";let need=state.level*100;$("xpfill").style.width=Math.min(100,state.xp/need*100)+"%";$("nextxp").textContent=Math.max(0,need-state.xp)+" XP to Level "+(state.level+1);$("invcount").textContent=state.inv.length+"/50"}
 function gainXP(x){state.xp+=x;while(state.xp>=state.level*100){state.xp-=state.level*100;state.level++;products.forEach(p=>p.stock+=2)}}
@@ -72,7 +81,7 @@ function visual(p){let type=p.cat==="Fashion"?((/tee|hoodie|sweat|jacket|shirt|c
 function card(p){let sell=resale(p),profit=sell-p.buy,can=state.cash>=p.buy&&p.stock>0;return `<div class="card item" data-id="${p.id}"><div class="itemTop"><div class="itemVisualWrap">${visual(p)}</div><div class="itemInfo" style="flex:1"><h3>${p.n}</h3><div class="meta">${p.cat} • <span class="brandTag">${p.brand}</span> • Stock: ${p.stock}</div></div><div class="itemPrice"><div class="money">${fmt(p.buy)}</div><div class="sellLine">Sell ${fmt(sell)} • <span class="profit">Profit +${fmt(profit)}</span></div></div></div><div class="purchaseRow"><div class="qty"><button class="minus">−</button><input value="1" readonly><button class="plus">+</button></div><button class="buy" ${can?"":"disabled"}>Buy</button></div></div>`}
 function renderMarket(){let arr=products.filter(p=>(state.cat==="All"||p.cat===state.cat)&&(state.brand==="All"||p.brand===state.brand)&&p.n.toLowerCase().includes(state.q.toLowerCase()));$("marketGrid").innerHTML=arr.map(card).join("")||'<div class="empty">No items found.</div>'}
 function renderInv(){let brands=["All Brands",...new Set(state.inv.map(x=>x.brand))];let sel=$("invbrand").value;if(!brands.includes(sel))sel="All Brands";$("invbrand").innerHTML=brands.map(x=>`<option>${x}</option>`).join("");$("invbrand").value=sel;let a=state.inv.filter(x=>sel==="All Brands"||x.brand===sel);$("inventoryList").innerHTML=a.length?a.map((x,i)=>`<div class="invrow"><div><b class="white">${x.n}</b><div class="meta">${x.ready?"Ready to sell":"📦 Shipping · "+Math.max(0,Math.ceil((x.readyAt-Date.now())/1000))+"s"}</div></div><div><div class="money">${fmt(resale(x))}</div><button data-sell="${i}" ${x.ready?"":"disabled"}>Sell</button></div></div>`).join(""):'<div class="empty">Inventory is empty.</div>'}
-function render(){renderStats();renderMarket();renderInv();save()}
+function render(){renderStats();$("cat").value=state.cat;$("search").value=state.q;renderMarket();renderInv();save()}
 document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{document.querySelectorAll(".screen").forEach(x=>x.classList.remove("on"));$(b.dataset.tab).classList.add("on");document.querySelectorAll("[data-tab]").forEach(x=>x.classList.remove("active"));b.classList.add("active");if(b.dataset.tab==="inventory")renderInv()})
 $("search").oninput=e=>{state.q=e.target.value;renderMarket();save()}
 $("cat").onchange=e=>{state.cat=e.target.value;renderMarket()}
