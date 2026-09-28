@@ -96,5 +96,5 @@ function endShark(win){clearInterval(sharkTimer);clearInterval(sharkTime);if(win
 function startShark(){clearInterval(sharkTimer);clearInterval(sharkTime);pos={x:1,y:1};shark={x:9,y:9};let left=20;$("sharkStatus").textContent="20s left";drawMaze();sharkTimer=setInterval(sharkStep,450);sharkTime=setInterval(()=>{left--; $("sharkStatus").textContent=left+"s left";if(left<=0)endShark(true)},1000)}
 $("sharkStart").onclick=startShark;document.querySelectorAll("[data-move]").forEach(b=>b.onclick=()=>{let d={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]}[b.dataset.move];move(...d)});document.addEventListener("keydown",e=>{if(!document.getElementById("mini").classList.contains("on"))return;let d={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]}[e.key];if(d){e.preventDefault();move(...d)}})
 render();
-</script></body></html>
-render();
+<render();/script></body></html>
+
