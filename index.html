@@ -97,3 +97,4 @@ function startShark(){clearInterval(sharkTimer);clearInterval(sharkTime);pos={x:
 $("sharkStart").onclick=startShark;document.querySelectorAll("[data-move]").forEach(b=>b.onclick=()=>{let d={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]}[b.dataset.move];move(...d)});document.addEventListener("keydown",e=>{if(!document.getElementById("mini").classList.contains("on"))return;let d={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]}[e.key];if(d){e.preventDefault();move(...d)}})
 render();
 </script></body></html>
+render();
