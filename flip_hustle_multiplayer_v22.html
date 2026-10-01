@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Flip Hustle — Multiplayer Prototype</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#07101e;font-family:Arial,Helvetica,sans-serif;color:#fff}
+#game{position:fixed;inset:0}canvas{display:block;width:100%;height:100%}
+.glow{box-shadow:0 0 18px rgba(160,70,255,.55), inset 0 0 12px rgba(120,40,255,.16)}
+#hud{position:fixed;inset:0;pointer-events:none}
+.top{display:flex;gap:18px;align-items:center;padding:22px 22px 0}
+.card{height:70px;background:rgba(7,10,25,.94);border:1px solid rgba(135,72,255,.18);border-radius:18px;padding:9px 20px;min-width:250px;display:flex;align-items:center;gap:14px;box-shadow:0 8px 25px rgba(0,0,0,.28)}
+.icon{font-size:30px}.small{font-size:17px;font-weight:700;letter-spacing:.5px}.big{font-size:28px;font-weight:900;color:#65ff35}.purple{color:#d65cff}
+#players{margin-left:auto;min-width:185px}.sub{font-size:15px;color:#d8d8e5;margin-top:2px}
+#left{position:fixed;left:18px;top:115px;width:175px;pointer-events:auto}.logo{font-size:32px;line-height:.83;font-weight:1000;font-style:italic;text-shadow:3px 4px 0 #070713,0 0 16px #9b35ff;margin:0 0 28px 18px}
+.nav{height:52px;margin:8px 0;border-radius:14px;background:rgba(5,7,19,.95);border:1px solid #5420a7;color:white;font-size:17px;font-weight:800;display:flex;align-items:center;gap:11px;padding:0 14px;box-shadow:0 5px 18px rgba(0,0,0,.35)}
+.nav.active{background:linear-gradient(90deg,#6b21ff,#9a38ff);box-shadow:0 0 20px rgba(145,55,255,.7)}
+#base{position:fixed;right:20%;bottom:25%;background:rgba(9,7,24,.9);border:1px solid #9a46ff;border-radius:15px;padding:14px 22px;font-weight:800;box-shadow:0 0 20px rgba(145,55,255,.45)}
+#controls{position:fixed;inset:auto 0 24px 0;pointer-events:none}
+#joy{position:absolute;left:58px;bottom:0;width:190px;height:190px;border-radius:50%;background:rgba(20,20,32,.5);border:1px solid rgba(255,255,255,.12);pointer-events:auto;touch-action:none}
+#stick{position:absolute;left:50%;top:50%;width:82px;height:82px;transform:translate(-50%,-50%);border-radius:50%;background:rgba(255,255,255,.14);border:2px solid rgba(255,255,255,.25)}
+#jump{position:absolute;right:42px;bottom:2px;width:140px;height:140px;border-radius:50%;background:rgba(20,20,32,.5);border:1px solid rgba(255,255,255,.12);font-size:52px;color:white;pointer-events:auto;touch-action:none}
+#camera{position:absolute;right:35px;bottom:160px;width:78px;height:78px;border-radius:50%;background:rgba(20,20,32,.58);border:1px solid rgba(255,255,255,.16);font-size:30px;pointer-events:auto}
+#hint{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);font-size:13px;color:#d7d7e8;background:rgba(0,0,0,.35);padding:7px 12px;border-radius:9px}
+#version{position:fixed;left:20px;bottom:12px;background:#0a0720;border:1px solid #6d25d7;border-radius:9px;padding:7px 12px;color:#bd72ff;font-weight:800;font-size:13px}
+@media(max-width:800px){.top{gap:6px;padding:8px}.card{min-width:0;height:54px;padding:6px 10px;border-radius:13px}.card .icon{font-size:22px}.small{font-size:12px}.big{font-size:19px}.sub{font-size:10px}.top .card:nth-child(3){display:none}#players{min-width:120px}.left{top:85px}#left{width:145px}.logo{font-size:25px;margin-bottom:16px}.nav{height:43px;font-size:14px}#base{right:12%;bottom:26%;font-size:12px;padding:10px 14px}#joy{left:20px;width:145px;height:145px}#stick{width:64px;height:64px}#jump{right:15px;width:110px;height:110px;font-size:42px}}
+</style>
+</head>
+<body>
+<div id="game"></div>
+<div id="hud">
+  <div class="top">
+    <div class="card"><div class="icon">💵</div><div><div class="small">CASH</div><div class="big">$200</div></div><div style="margin-left:auto;font-size:28px;color:#71ff3b">＋</div></div>
+    <div class="card"><div class="icon">★</div><div><div class="small">LEVEL <span class="purple">1</span></div><div class="sub">0 / 100 XP</div></div><div style="margin-left:auto;font-size:26px;color:#bd62ff">＋</div></div>
+    <div class="card"><div class="icon">🎒</div><div><div class="small">INVENTORY</div><div class="big">0 / 20</div></div></div>
+    <div class="card" id="players"><div class="icon">👥</div><div><div class="small">PLAYERS</div><div class="sub">12/16</div></div></div>
+  </div>
+  <div id="left">
+    <div class="logo">♛<br>FLIP<br>HUSTLE</div>
+    <div class="nav active">👥 Multiplayer</div><div class="nav">🛒 Shop</div><div class="nav">🎒 Inventory</div><div class="nav">↔ Trade</div><div class="nav">⚙ Settings</div>
+  </div>
+  <div id="base">🏠 &nbsp; Your Base<br><span style="opacity:.75">🔒 (Locked)</span></div>
+  <div id="controls">
+    <div id="joy"><div id="stick"></div></div>
+    <button id="jump">⬆</button>
+    <button id="camera">◉</button>
+  </div>
+  <div id="hint">Drag the screen to look around • WASD / arrows to move • Space to jump</div>
+  <div id="version">v2.2 | Multiplayer Prototype</div>
+</div>
+
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js';
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x79b8ef);
+scene.fog=new THREE.Fog(0x7fb8e8,75,260);
+
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth,innerHeight);
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.12;
+document.getElementById('game').appendChild(renderer.domElement);
+
+scene.add(new THREE.HemisphereLight(0xbfe5ff,0x20243b,2.1));
+const sun=new THREE.DirectionalLight(0xfff4df,3.2);sun.position.set(-45,70,35);sun.castShadow=true;
+sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-100;sun.shadow.camera.right=100;sun.shadow.camera.top=100;sun.shadow.camera.bottom=-100;scene.add(sun);
+const purple=new THREE.PointLight(0x9b3cff,30,75);purple.position.set(0,7,-18);scene.add(purple);
+
+function box(w,h,d,x,y,z,mat,bevel=0){
+  const g=new THREE.BoxGeometry(w,h,d);const m=new THREE.Mesh(g,mat);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;scene.add(m);return m;
+}
+function mat(c,rough=.7,metal=0){return new THREE.MeshStandardMaterial({color:c,roughness:rough,metalness:metal});}
+const dark=mat(0x11121b,.52), black=mat(0x080910,.6), concrete=mat(0x767681,.88), glass=new THREE.MeshPhysicalMaterial({color:0x172338,metalness:.05,roughness:.12,transmission:.08,transparent:true,opacity:.72});
+const grass=mat(0x31583b), white=mat(0xe9e9ef), purpleMat=mat(0x7e22ff,.35,0.1), water=mat(0x148dcc,.15);
+
+box(170,.35,270,0,-.18,-55,grass);
+box(19,.4,270,0,.03,-55,mat(0x3b3b43,.95));
+box(4,.12,270,-12,.25,-55,mat(0x96969e,.9));box(4,.12,270,12,.25,-55,mat(0x96969e,.9));
+
+function house(x,z,flip=false){
+  const base=box(31,6,27,x,3,z,dark);
+  box(31,2,27,x,7,z,mat(0x242532,.6));
+  box(28,8,1.1,x,5,z+(flip?12.8:-12.8),glass);
+  box(1.1,8,27,x+(flip?14.9:-14.9),5,z,glass);
+  for(let i=0;i<4;i++) box(4.5,.25,.35,x-10+i*6.7,8.15,z+(flip?13.5:-13.5),purpleMat);
+  box(22,.4,14,x,9.1,z,mat(0x151622,.55));
+}
+house(-25,-40,false);house(25,-40,true);house(-25,12,false);house(25,12,true);house(-25,64,false);house(25,64,true);
+
+function pool(x,z){
+  box(22,.5,13,x,.05,z,mat(0x25252f,.8));
+  box(19,.45,10,x,.35,z,water);
+  box(19,.05,.25,x,.62,z-5,white);box(19,.05,.25,x,.62,z+5,white);
+}
+pool(-24,-3);
+
+function tree(x,z,s=1){
+  const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.55*s,.75*s,4*s,10),mat(0x4b2f22));
+  trunk.position.set(x,2*s,z);trunk.castShadow=true;scene.add(trunk);
+  const crown=new THREE.Mesh(new THREE.SphereGeometry(3.2*s,16,12),mat(0x2d6a43));
+  crown.position.set(x,6*s,z);crown.castShadow=true;scene.add(crown);
+}
+for(let z=-105;z<110;z+=18){tree(-42,z,.9);tree(42,z,1.05)}
+
+function stripLight(x,y,z,w=8){
+  const m=box(w,.08,.16,x,y,z,purpleMat);
+  const l=new THREE.PointLight(0x9a42ff,5,14);l.position.set(x,y+.3,z);scene.add(l);
+}
+stripLight(-25,9,-26,23);stripLight(25,9,-26,23);stripLight(0,.4,-18,8);
+
+function helipad(x,z){
+  const p=new THREE.Mesh(new THREE.CylinderGeometry(7,7,.35,64),mat(0x27283a,.65));p.position.set(x,.2,z);p.receiveShadow=true;scene.add(p);
+  const ring=new THREE.Mesh(new THREE.RingGeometry(6.2,6.55,.1,64),new THREE.MeshBasicMaterial({color:0x9d35ff,side:THREE.DoubleSide}));
+  ring.rotation.x=-Math.PI/2;ring.position.set(x,.4,z);scene.add(ring);
+  box(5,.08,1,x,.42,z,white);
+}
+helipad(31,-28);
+
+function car(x,z,c){
+  const g=new THREE.Group();g.position.set(x,.9,z);scene.add(g);
+  const body=new THREE.Mesh(new THREE.BoxGeometry(7,1.4,3.2),mat(c,.35,.25));body.castShadow=true;g.add(body);
+  const top=new THREE.Mesh(new THREE.BoxGeometry(3.7,1.2,2.7),glass);top.position.y=1.1;top.castShadow=true;g.add(top);
+  for(const dx of [-2.3,2.3]) for(const dz of [-1.55,1.55]){const w=new THREE.Mesh(new THREE.CylinderGeometry(.58,.58,.45,16),black);w.rotation.z=Math.PI/2;w.position.set(dx,-.7,dz);g.add(w)}
+}
+car(18,-26,0x242632);car(30,5,0x7014b9);
+
+function avatar(x,z,hoodie=0x090a0f){
+  const g=new THREE.Group();g.position.set(x,0,z);scene.add(g);
+  const torso=new THREE.Mesh(new THREE.CapsuleGeometry(.42,1.35,6,10),mat(hoodie,.72));torso.position.y=1.15;torso.castShadow=true;g.add(torso);
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.72,24,16),mat(0x080910,.5));head.position.y=2.55;head.castShadow=true;g.add(head);
+  const limbMat=mat(0x080910,.75);
+  for(const sx of [-.58,.58]){const arm=new THREE.Mesh(new THREE.CapsuleGeometry(.11,.95,5,8),limbMat);arm.position.set(sx,1.2,0);arm.rotation.z=sx<0?.18:-.18;arm.castShadow=true;g.add(arm)}
+  for(const sx of [-.27,.27]){const leg=new THREE.Mesh(new THREE.CapsuleGeometry(.13,1.25,5,8),limbMat);leg.position.set(sx,.2,0);leg.castShadow=true;g.add(leg)}
+  for(const sx of [-.27,.27]) box(.55,.22,1.0,sx,-.55,.1,mat(0xf0f0f4,.55),0);
+  return g;
+}
+const player=avatar(0,28,0x0a0a0f);
+const other1=avatar(-17,-4,0xeeeeee);other1.scale.setScalar(.9);
+const other2=avatar(18,-6,0x111111);other2.scale.setScalar(.95);
+
+function sign(text,x,y,z){
+  const c=document.createElement('canvas');c.width=512;c.height=128;const ctx=c.getContext('2d');
+  ctx.fillStyle='#0b0817';ctx.fillRect(0,0,512,128);ctx.strokeStyle='#9b3cff';ctx.lineWidth=6;ctx.strokeRect(3,3,506,122);
+  ctx.fillStyle='#fff';ctx.font='bold 38px Arial';ctx.textAlign='center';ctx.fillText(text,256,78);
+  const tex=new THREE.CanvasTexture(c);const s=new THREE.Mesh(new THREE.PlaneGeometry(10,2.5),new THREE.MeshBasicMaterial({map:tex,transparent:true}));s.position.set(x,y,z);scene.add(s);
+}
+sign('FLIP HUSTLE  •  MULTIPLAYER BASE',0,10.5,-26);
+sign('BETTER FLIPS  •  BIGGER DREAMS',-42,7,-12);
+
+const keys={};addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(e.code==='Space')jump()});addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+let yaw=0, pitch=.42, vy=0, grounded=true;
+const cam=new THREE.PerspectiveCamera(58,innerWidth/innerHeight,.1,500);
+function jump(){if(grounded){vy=7;grounded=false}}
+document.getElementById('jump').addEventListener('pointerdown',jump);
+
+let joyX=0,joyY=0,joyOn=false;const joy=document.getElementById('joy'),stick=document.getElementById('stick');
+function setJoy(e){const r=joy.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;let x=e.clientX-cx,y=e.clientY-cy;const max=r.width*.34;const d=Math.hypot(x,y);if(d>max){x*=max/d;y*=max/d}joyX=x/max;joyY=y/max;stick.style.left=`calc(50% + ${x}px)`;stick.style.top=`calc(50% + ${y}px)`}
+joy.addEventListener('pointerdown',e=>{joyOn=true;joy.setPointerCapture(e.pointerId);setJoy(e)});joy.addEventListener('pointermove',e=>{if(joyOn)setJoy(e)});joy.addEventListener('pointerup',()=>{joyOn=false;joyX=joyY=0;stick.style.left='50%';stick.style.top='50%'});
+
+let drag=false,lx=0,ly=0;
+renderer.domElement.addEventListener('pointerdown',e=>{drag=true;lx=e.clientX;ly=e.clientY});
+addEventListener('pointerup',()=>drag=false);
+addEventListener('pointermove',e=>{if(!drag)return;const dx=e.clientX-lx,dy=e.clientY-ly;lx=e.clientX;ly=e.clientY;yaw-=dx*.006;pitch-=dy*.004;pitch=Math.max(.12,Math.min(.9,pitch))});
+
+function animate(){
+  requestAnimationFrame(animate);
+  let f=(keys.w||keys.arrowup?-1:0)+(keys.s||keys.arrowdown?1:0)+joyY;
+  let s=(keys.d||keys.arrowright?1:0)+(keys.a||keys.arrowleft?-1:0)+joyX;
+  const len=Math.hypot(f,s);if(len>1){f/=len;s/=len}
+  const speed=.18;const dir=new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw));
+  const side=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));
+  player.position.addScaledVector(dir,f*speed);player.position.addScaledVector(side,s*speed);
+  if(len>.08)player.rotation.y=Math.atan2((dir.x*f+side.x*s),(dir.z*f+side.z*s));
+  vy-=.28;player.position.y+=vy*.08;if(player.position.y<=0){player.position.y=0;vy=0;grounded=true}
+  const target=new THREE.Vector3(player.position.x,1.45+player.position.y,player.position.z);
+  const camDist=8.8;cam.position.set(target.x-Math.sin(yaw)*camDist,target.y+3.2,target.z-Math.cos(yaw)*camDist);cam.lookAt(target);
+  renderer.render(scene,cam);
+}
+animate();
+addEventListener('resize',()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+</script>
+</body>
+</html>
